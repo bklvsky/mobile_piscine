@@ -9,11 +9,9 @@ struct KeyButton: View {
         Button { action(label) } label: {
             Text(label)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle)
-        .accessibilityLabel("Key \(label)")
     }
 }
 
@@ -68,18 +66,12 @@ struct ContentView: View {
         VStack(spacing: 5) {
             TextField("", text: $expression)
                 .font(displayFont(geo: geo))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.1)
-                .allowsTightening(true)
+                .allowsTightening(true) // to let the digits be smaller when a string is big
                 .multilineTextAlignment(.trailing)
                 .padding(.horizontal, 8)
 
             TextField("", text: $result)
                 .font(displayFont(geo: geo))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.1)
                 .allowsTightening(true)
                 .multilineTextAlignment(.trailing)
                 .padding(.horizontal, 8)
@@ -106,7 +98,6 @@ struct ContentView: View {
                 }
                 .frame(height: max(36, metrics.cellHeight))
                 .font(metrics.buttonFont)
-                .monospacedDigit()
             }
         }
     }

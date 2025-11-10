@@ -10,7 +10,6 @@ struct KeyButton: View {
         Button { action(label) } label: {
             Text(label)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle)
@@ -23,7 +22,7 @@ struct KeyButton: View {
 struct ContentView: View {
     @State private var expression: String = "0"
     @State private var result: String = "0"
-    @State private var headerHeight: CGFloat = 0
+    @State private var headerHeight: CGFloat = 0 // we re-render the view when we rotate the device, thats why it is a @state
 
     private let keys: [String] = [
         "AC","C","/","*",
@@ -43,19 +42,12 @@ struct ContentView: View {
                         VStack(spacing: 5) {
                             TextField("", text: $expression)
                                 .font(displayFont(geo: geo))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.1)
-                                .allowsTightening(true)
                                 .multilineTextAlignment(.trailing)
                                 .padding(.horizontal, 8)
+                                .disabled(true)
 
                             TextField("", text: $result)
                                 .font(displayFont(geo: geo))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.1)
-                                .allowsTightening(true)
                                 .multilineTextAlignment(.trailing)
                                 .padding(.horizontal, 8)
                                 .disabled(true)
@@ -63,8 +55,9 @@ struct ContentView: View {
                         .background(
                             GeometryReader { g in
                                 Color.clear
+                                    // For ios < 17 (initial: true doesn't work)
                                     .onAppear { headerHeight = g.size.height }
-                                    // iOS 17+ onChange two-parameter form
+                                    // iOs 17+ onChange two-parameter form
                                     .onChange(of: g.size.height, initial: true) { _, newHeight in
                                         headerHeight = newHeight
                                     }
@@ -77,12 +70,10 @@ struct ContentView: View {
                         LazyVGrid(columns: columns, spacing: metrics.gridSpacing) {
                             ForEach(keys, id: \.self) { k in
                                 KeyButton(label: k) { label in
-                                    // TODO: wire real logic
                                     print(label)
                                 }
-                                .frame(height: max(36, metrics.cellHeight))
+                                .frame(height: max(36, metrics.cellHeight)) // don't let the grid become too big on big screens
                                 .font(metrics.buttonFont)
-                                .monospacedDigit()
                             }
                         }
                     }
@@ -103,26 +94,25 @@ struct ContentView: View {
     // MARK: - Sizing Helpers (inside the struct)
 
     func displayFont(geo: GeometryProxy) -> Font {
-        let baselineHeight = geo.size.height / 4 - 18
-        let size = min(max(baselineHeight * 0.6, 18), 72)
-        return .system(size: size, design: .rounded)
+        let baselineHeight = geo.size.height / 4 - 18 // approximate height of each textfield
+        let size = min(max(baselineHeight * 0.6, 18), 72) // don't let the text be too big or too small
+        return Font.system(size: size)
     }
 
     func gridMetrics(geo: GeometryProxy, headerHeight: CGFloat)
         -> (rows: Int, cellHeight: CGFloat, buttonFont: Font, gridSpacing: CGFloat)
     {
-        let gridSpacing: CGFloat = 5
-        let verticalPaddings: CGFloat = 16 /*top*/ + 24 /*bottom*/
+        let gridSpacing: CGFloat = 5 // soace between buttons vertically
+        let verticalPaddings: CGFloat = 16 + 24 // extra space at the top and at the bottom
 
         // Integer ceiling division: rows = ceil(keys/count per row)
         let rows = (keys.count + columns.count - 1) / columns.count
 
-        let availableForGrid = max(0, geo.size.height - verticalPaddings - headerHeight)
+        let availableForGrid = geo.size.height - verticalPaddings - headerHeight
         let cellHeight = (availableForGrid - gridSpacing * CGFloat(rows - 1)) / CGFloat(rows)
 
-        let buttonPointSize = max(18, min(44, cellHeight * 0.45))
-        let buttonFont = Font.system(size: buttonPointSize, weight: .regular, design: .rounded)
-
+        let buttonFontSize = max(18, min(44, cellHeight * 0.45)) // don't let the numbers be too big or too small
+        let buttonFont = Font.system(size: buttonFontSize)
         return (rows, cellHeight, buttonFont, gridSpacing)
     }
 }
@@ -130,3 +120,4 @@ struct ContentView: View {
 // MARK: - Preview
 
 #Preview { ContentView() }
+
